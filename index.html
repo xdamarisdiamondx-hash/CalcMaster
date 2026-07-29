@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CalcMaster - Calculator & Currency Converter</title>
+  <meta name="description" content="Fast, clean, and intuitive calculator with integrated multi-currency and Espees conversion.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="app-container" id="appContainer">
+
+    <!-- App Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon">C</div>
+        <span class="brand-name">CalcMaster</span>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" id="historyHeaderBtn" title="Calculation History" aria-label="History">🕒</button>
+        <button class="icon-btn" id="helpHeaderBtn" title="How to Use / Walkthrough" aria-label="Help">❓</button>
+        <button class="icon-btn" id="settingsHeaderBtn" title="App Settings" aria-label="Settings">⚙️</button>
+      </div>
+    </header>
+
+    <!-- Mode Selector Navigation -->
+    <nav class="mode-nav" aria-label="App Modes">
+      <button class="nav-tab active" id="tabCalc" aria-selected="true">
+        <span>🧮 Calculator</span>
+      </button>
+      <button class="nav-tab" id="tabCurrency" aria-selected="false">
+        <span>💱 Currency</span>
+      </button>
+    </nav>
+
+    <!-- App Main Content Area -->
+    <main class="app-content">
+
+      <!-- ==================================================
+           1. CALCULATOR MODULE VIEW
+      ================================================== -->
+      <section class="view-section calc-view active" id="viewCalc">
+
+        <!-- Calculator Display Screen -->
+        <div class="calc-display-wrapper">
+          <div class="calc-sub-header">
+            <span class="angle-unit-badge" id="angleUnitBadge">DEG</span>
+            <span style="font-size:0.75rem; color:var(--text-muted)">CalcMaster Math v1.0</span>
+          </div>
+          <div class="calc-expression" id="calcExpression" aria-label="Expression Display"></div>
+          <div class="calc-result" id="calcResult" aria-label="Result Display">0</div>
+        </div>
+
+        <!-- Controls Bar -->
+        <div class="calc-controls">
+          <button class="toggle-sciemode-btn" id="toggleSciBtn">
+            <span>🔬 Scientific Mode</span>
+          </button>
+        </div>
+
+        <!-- Keypads Container -->
+        <div class="keypads-wrapper">
+          
+          <!-- Scientific Keypad (Expandable) -->
+          <div class="keypad-grid sci-keypad" id="sciKeypad"><button class="calc-btn sci-btn" data-action="func" data-val="sin">sin</button><button class="calc-btn sci-btn" data-action="func" data-val="cos">cos</button><button class="calc-btn sci-btn" data-action="func" data-val="tan">tan</button><button class="calc-btn sci-btn" data-action="func" data-val="asin">sin⁻¹</button><button class="calc-btn sci-btn" data-action="func" data-val="acos">cos⁻¹</button><button class="calc-btn sci-btn" data-action="func" data-val="log">log</button><button class="calc-btn sci-btn" data-action="func" data-val="ln">ln</button><button class="calc-btn sci-btn" data-action="power" data-val="2">x²</button><button class="calc-btn sci-btn" data-action="power" data-val="3">x³</button><button class="calc-btn sci-btn" data-action="op" data-val="^">x^y</button><button class="calc-btn sci-btn" data-action="func" data-val="sqrt">√</button><button class="calc-btn sci-btn" data-action="func" data-val="cbrt">∛</button><button class="calc-btn sci-btn" data-action="factorial" data-val="!">n!</button><button class="calc-btn sci-btn" data-action="const" data-val="π">π</button><button class="calc-btn sci-btn" data-action="const" data-val="e">e</button></div>
+
+          <!-- Basic Keypad -->
+          <div class="keypad-grid basic-keypad">
+            <!-- Row 1 -->
+            <button class="calc-btn action-btn" data-action="clear">AC</button>
+            <button class="calc-btn action-btn" data-action="backspace">⌫</button>
+            <button class="calc-btn op-btn" data-action="paren" data-val="(">(</button>
+            <button class="calc-btn op-btn" data-action="paren" data-val=")">)</button>
+
+            <!-- Row 2 -->
+            <button class="calc-btn op-btn" data-action="op" data-val="%">%</button>
+            <button class="calc-btn action-btn" data-action="negate">±</button>
+            <button class="calc-btn op-btn" data-action="func" data-val="sqrt">√</button>
+            <button class="calc-btn op-btn" data-action="op" data-val="÷">÷</button>
+
+            <!-- Row 3 -->
+            <button class="calc-btn" data-action="digit" data-val="7">7</button>
+            <button class="calc-btn" data-action="digit" data-val="8">8</button>
+            <button class="calc-btn" data-action="digit" data-val="9">9</button>
+            <button class="calc-btn op-btn" data-action="op" data-val="×">×</button>
+
+            <!-- Row 4 -->
+            <button class="calc-btn" data-action="digit" data-val="4">4</button>
+            <button class="calc-btn" data-action="digit" data-val="5">5</button>
+            <button class="calc-btn" data-action="digit" data-val="6">6</button>
+            <button class="calc-btn op-btn" data-action="op" data-val="-">-</button>
+
+            <!-- Row 5 -->
+            <button class="calc-btn" data-action="digit" data-val="1">1</button>
+            <button class="calc-btn" data-action="digit" data-val="2">2</button>
+            <button class="calc-btn" data-action="digit" data-val="3">3</button>
+            <button class="calc-btn op-btn" data-action="op" data-val="+">+</button>
+
+            <!-- Row 6 -->
+            <button class="calc-btn" data-action="digit" data-val="0">0</button>
+            <button class="calc-btn" data-action="digit" data-val="00">00</button>
+            <button class="calc-btn" data-action="digit" data-val=".">.</button>
+            <button class="calc-btn equals-btn" data-action="equals">=</button>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ==================================================
+           2. CURRENCY CONVERTER MODULE VIEW
+      ================================================== -->
+      <section class="view-section currency-view" id="viewCurrency">
+
+        <div class="converter-card">
+
+          <!-- Live Status Bar -->
+          <div class="rate-status-bar">
+            <div class="status-pill" id="rateStatusPill">
+              <span class="status-dot"></span>
+              <span id="rateStatusText">Live Rates</span>
+            </div>
+            <button class="refresh-rates-btn" id="refreshRatesBtn">
+              🔄 Refresh Rates
+            </button>
+          </div>
+
+          <!-- "From" Currency Input -->
+          <div class="currency-row">
+            <label class="currency-label" for="fromAmountInput">You Send / From</label>
+            <div class="currency-input-group">
+              <button class="currency-selector-btn" id="fromSelectorBtn" type="button">
+                <span>🇺🇸 USD</span> <span>▼</span>
+              </button>
+              <input type="number" id="fromAmountInput" class="amount-input" value="100" placeholder="0.00">
+            </div>
+          </div>
+
+          <!-- Swap Button Divider -->
+          <div class="swap-divider">
+            <button class="swap-btn" id="swapBtn" title="Swap Currencies" aria-label="Swap Currencies">⇄</button>
+          </div>
+
+          <!-- "To" Currency Output -->
+          <div class="currency-row">
+            <label class="currency-label" for="toAmountOutput">You Receive / To</label>
+            <div class="currency-input-group">
+              <button class="currency-selector-btn" id="toSelectorBtn" type="button">
+                <span>🈹 ESP</span> <span>▼</span>
+              </button>
+              <input type="text" id="toAmountOutput" class="amount-input" readonly placeholder="0.00">
+            </div>
+          </div>
+
+          <!-- Direct Exchange Rate Banner -->
+          <div class="exchange-rate-display" id="exchangeRateDisplay">
+            1 USD = 1.00 ESP
+          </div>
+
+          <!-- Dedicated Espees Highlight Banner -->
+          <div class="espees-badge">
+            <div class="espees-icon">🈹</div>
+            <div>
+              <strong style="color:var(--accent-orange)">Espees (ESP) Integrated</strong>
+              <div style="font-size:0.75rem; color:var(--text-secondary)">Supports instant Espees conversion & custom rate management in settings.</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Quick Matrix Table -->
+        <div>
+          <div class="quick-matrix-title">Quick Conversion Reference</div>
+          <div class="quick-matrix-grid" id="quickMatrixGrid">
+            <!-- Dynamic entries -->
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- ==================================================
+         3. MODALS & OVERLAYS
+    ================================================== -->
+
+    <!-- Walkthrough Onboarding Modal (FR-11, 12, 13, 14) -->
+    <div class="walkthrough-modal" id="walkthroughModal">
+      <div class="walkthrough-top">
+        <span style="font-weight:700; color:var(--accent-orange)">CalcMaster Walkthrough</span>
+        <button class="walkthrough-skip-btn" id="walkthroughSkipBtn">Skip</button>
+      </div>
+
+      <div class="cards-carousel-container">
+        
+        <!-- Screen 1 -->
+        <div class="walkthrough-card active">
+          <div class="card-illustration">🧮</div>
+          <h2 class="card-title">Welcome to CalcMaster</h2>
+          <p class="card-description">Your clean, fast, cross-platform calculator & live currency converter styled in dark grey and orange.</p>
+        </div>
+
+        <!-- Screen 2 -->
+        <div class="walkthrough-card">
+          <div class="card-illustration">🔬</div>
+          <h2 class="card-title">Scientific & Basic Math</h2>
+          <p class="card-description">Perform everyday math or toggle scientific mode for Trigonometry (DEG/RAD), Logarithms, Roots, Factorial, and Exponents.</p>
+        </div>
+
+        <!-- Screen 3 -->
+        <div class="walkthrough-card">
+          <div class="card-illustration">🈹</div>
+          <h2 class="card-title">Multi-Currency & Espees</h2>
+          <p class="card-description">Convert major world currencies and Espees (ESP) with live rate API fetching and offline cached rate fallback.</p>
+        </div>
+
+        <!-- Screen 4 -->
+        <div class="walkthrough-card">
+          <div class="card-illustration">📜</div>
+          <h2 class="card-title">History & Customization</h2>
+          <p class="card-description">Tap past calculations to instantly reuse results. Customize Espees exchange rates and audio feedback anytime in Settings.</p>
+        </div>
+
+      </div>
+
+      <div class="walkthrough-footer">
+        <div class="dots-indicator" id="dotsContainer"></div>
+        <button class="walkthrough-next-btn" id="walkthroughNextBtn">Next</button>
+      </div>
+    </div>
+
+    <!-- Currency Picker Search Modal -->
+    <div class="modal-overlay" id="currencyPickerModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <span class="modal-title">Select Currency</span>
+          <button class="icon-btn" id="closeCurrencyModalBtn">✕</button>
+        </div>
+        <div class="modal-body">
+          <input type="text" class="search-box" id="currencySearchBox" placeholder="Search currency name or code (e.g., USD, ESP, EUR)...">
+          <div class="currency-list" id="currencyListContainer">
+            <!-- Dynamic items -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Calculation & Conversion History Modal -->
+    <div class="modal-overlay" id="historyModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <span class="modal-title">Calculation History</span>
+          <button class="icon-btn" id="closeHistoryModalBtn">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="history-list" id="historyListContainer">
+            <!-- Dynamic items -->
+          </div>
+          <button class="walkthrough-next-btn" id="clearHistoryBtn" style="background:var(--bg-tertiary); color:var(--text-primary); margin-top:10px;">
+            Clear History
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- App Settings & Espees Custom Rate Modal -->
+    <div class="modal-overlay" id="settingsModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <span class="modal-title">App Settings</span>
+          <button class="icon-btn" id="closeSettingsModalBtn">✕</button>
+        </div>
+        <div class="modal-body">
+
+          <!-- Sound Feedback Toggle -->
+          <div class="setting-row">
+            <div class="setting-info">
+              <span class="setting-title">Tactile Audio Feedback</span>
+              <span class="setting-desc">Play soft click sound on button press</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="soundToggleInput" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <!-- Espees Rate Management -->
+          <div style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:14px; display:flex; flex-direction:column; gap:8px;">
+            <span style="font-weight:600; color:var(--accent-orange); font-size:0.9rem;">Espees (ESP) Fixed Rate</span>
+            <span style="font-size:0.75rem; color:var(--text-secondary)">Naira (NGN) per 1 Espees — currently locked at 2,050:</span>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <input type="number" id="espeesRateInput" class="search-box" style="flex:1" step="1" value="2050">
+              <button class="walkthrough-next-btn" id="saveEspeesRateBtn" style="width:auto; padding:10px 16px; font-size:0.85rem;">Save</button>
+            </div>
+          </div>
+
+          <!-- Replay Onboarding Walkthrough -->
+          <div class="setting-row">
+            <div class="setting-info">
+              <span class="setting-title">How to Use Walkthrough</span>
+              <span class="setting-desc">Replay the onboarding walkthrough slides</span>
+            </div>
+            <button class="icon-btn" id="replayWalkthroughBtn" style="background:var(--bg-tertiary)">▶</button>
+          </div>
+
+          <!-- Reset App Data -->
+          <div class="setting-row" style="border-bottom:none">
+            <div class="setting-info">
+              <span class="setting-title" style="color:#ef4444">Reset App Data</span>
+              <span class="setting-desc">Clear local history and cache</span>
+            </div>
+            <button class="icon-btn" id="resetAppBtn" style="background:rgba(239, 68, 68, 0.2); color:#ef4444">🗑️</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Alerts -->
+    <div class="toast-container" id="toastContainer"></div>
+
+  </div>
+
+  <script src="audio.js"></script>
+  <script src="history.js"></script>
+  <script src="calculator.js"></script>
+  <script src="currency.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
