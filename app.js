@@ -11,8 +11,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const tabCalc            = document.getElementById('tabCalc');
   const tabCurrency        = document.getElementById('tabCurrency');
+  const tabUnit            = document.getElementById('tabUnit');
   const viewCalc           = document.getElementById('viewCalc');
   const viewCurrency       = document.getElementById('viewCurrency');
+  const viewUnit           = document.getElementById('viewUnit');
+
+  const unitCategoryBar    = document.getElementById('unitCategoryBar');
+  const unitFromSelect     = document.getElementById('unitFromSelect');
+  const unitToSelect       = document.getElementById('unitToSelect');
+  const unitFromInput      = document.getElementById('unitFromInput');
+  const unitToOutput       = document.getElementById('unitToOutput');
+  const unitSwapBtn        = document.getElementById('unitSwapBtn');
+  const unitFormulaDisplay = document.getElementById('unitFormulaDisplay');
+  const unitQuickMatrixGrid = document.getElementById('unitQuickMatrixGrid');
 
   const angleUnitBadge     = document.getElementById('angleUnitBadge');
   const calcExpression     = document.getElementById('calcExpression');
@@ -30,6 +41,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const toAmountOutput     = document.getElementById('toAmountOutput');
   const swapBtn            = document.getElementById('swapBtn');
   const rateStatusPill     = document.getElementById('rateStatusPill');
+  const bookmarkCurrentBtn   = document.getElementById('bookmarkCurrentBtn');
+  const bookmarkStarIcon     = document.getElementById('bookmarkStarIcon');
+  const bookmarksSection     = document.getElementById('bookmarksSection');
+  const bookmarksGrid        = document.getElementById('bookmarksGrid');
+
   const refreshRatesBtn    = document.getElementById('refreshRatesBtn');
   const exchangeRateDisplay = document.getElementById('exchangeRateDisplay');
   const quickMatrixGrid    = document.getElementById('quickMatrixGrid');
@@ -67,26 +83,28 @@ document.addEventListener('DOMContentLoaded', () => {
   // VIEW SWITCHER — single source of truth
   // -------------------------------------------------------
   function showView(viewName) {
-    // viewName: 'calc' | 'currency'
-    const isCalc = (viewName === 'calc');
+    // viewName: 'calc' | 'currency' | 'unit'
+    tabCalc.classList.toggle('active', viewName === 'calc');
+    tabCalc.setAttribute('aria-selected', viewName === 'calc');
 
-    // Tab active states
-    tabCalc.classList.toggle('active', isCalc);
-    tabCalc.setAttribute('aria-selected', isCalc);
-    tabCurrency.classList.toggle('active', !isCalc);
-    tabCurrency.setAttribute('aria-selected', !isCalc);
+    tabCurrency.classList.toggle('active', viewName === 'currency');
+    tabCurrency.setAttribute('aria-selected', viewName === 'currency');
 
-    // View visibility
-    viewCalc.classList.toggle('active', isCalc);
-    viewCurrency.classList.toggle('active', !isCalc);
+    tabUnit.classList.toggle('active', viewName === 'unit');
+    tabUnit.setAttribute('aria-selected', viewName === 'unit');
 
-    if (!isCalc) {
-      // Lazy-init currency on first switch, then re-render on every switch
+    viewCalc.classList.toggle('active', viewName === 'calc');
+    viewCurrency.classList.toggle('active', viewName === 'currency');
+    viewUnit.classList.toggle('active', viewName === 'unit');
+
+    if (viewName === 'currency') {
       if (!currencyInitialized) {
         currencyInitialized = true;
         window.currencyEngine.fetchLiveRates().then(() => renderCurrencyView());
       }
       renderCurrencyView();
+    } else if (viewName === 'unit') {
+      renderUnitView();
     }
   }
 
@@ -103,10 +121,65 @@ document.addEventListener('DOMContentLoaded', () => {
     showView('currency');
   });
 
+  tabUnit.addEventListener('click', (e) => {
+    e.stopPropagation();
+    window.soundManager.playClick('default');
+    showView('unit');
+  });
+
+  // -------------------------------------------------------
+  // THEME CONTROLLER (LIGHT / DARK MODE)
+  // -------------------------------------------------------
+  const themeToggleHeaderBtn   = document.getElementById('themeToggleHeaderBtn');
+  const themeToggleSettingsBtn = document.getElementById('themeToggleSettingsBtn');
+  const themeToggleSettingsIcon= document.getElementById('themeToggleSettingsIcon');
+  const themeToggleSettingsText= document.getElementById('themeToggleSettingsText');
+
+  let currentTheme = localStorage.getItem('calcmaster_theme') || 'dark';
+
+  function applyTheme(theme) {
+    currentTheme = theme;
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('calcmaster_theme', theme);
+
+    if (theme === 'light') {
+      if (themeToggleHeaderBtn) {
+        themeToggleHeaderBtn.textContent = '🌙';
+        themeToggleHeaderBtn.title = 'Switch to Dark Mode';
+      }
+      if (themeToggleSettingsIcon) themeToggleSettingsIcon.textContent = '🌙';
+      if (themeToggleSettingsText) themeToggleSettingsText.textContent = 'Dark Mode';
+    } else {
+      if (themeToggleHeaderBtn) {
+        themeToggleHeaderBtn.textContent = '☀️';
+        themeToggleHeaderBtn.title = 'Switch to Light Mode';
+      }
+      if (themeToggleSettingsIcon) themeToggleSettingsIcon.textContent = '☀️';
+      if (themeToggleSettingsText) themeToggleSettingsText.textContent = 'Light Mode';
+    }
+  }
+
+  function toggleTheme() {
+    window.soundManager.playClick('action');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    applyTheme(newTheme);
+    showToast(`Switched to ${newTheme.toUpperCase()} mode`);
+  }
+
+  if (themeToggleHeaderBtn) {
+    themeToggleHeaderBtn.addEventListener('click', toggleTheme);
+  }
+  if (themeToggleSettingsBtn) {
+    themeToggleSettingsBtn.addEventListener('click', toggleTheme);
+  }
+
   // -------------------------------------------------------
   // APP INIT
   // -------------------------------------------------------
   function initApp() {
+    // Apply persisted or default theme
+    applyTheme(currentTheme);
+
     // Ensure calc is the default visible view
     showView('calc');
 
@@ -268,7 +341,71 @@ document.addEventListener('DOMContentLoaded', () => {
     exchangeRateDisplay.innerHTML =
       `1 <span class="rate-highlight">${ce.fromCurrency}</span> = ${ce.formatCurrencyValue(directRate)} <span class="rate-highlight">${ce.toCurrency}</span>`;
 
+    // Bookmark star status
+    const isBookmarked = ce.isBookmarked(ce.fromCurrency, ce.toCurrency);
+    if (bookmarkStarIcon) bookmarkStarIcon.textContent = isBookmarked ? '⭐' : '☆';
+    if (bookmarkCurrentBtn) bookmarkCurrentBtn.classList.toggle('active', isBookmarked);
+
+    renderBookmarksGrid();
     renderQuickMatrix();
+  }
+
+  function renderBookmarksGrid() {
+    const ce = window.currencyEngine;
+    if (!bookmarksGrid) return;
+    bookmarksGrid.innerHTML = '';
+
+    if (ce.bookmarks.length === 0) {
+      if (bookmarksSection) bookmarksSection.style.display = 'none';
+      return;
+    }
+
+    if (bookmarksSection) bookmarksSection.style.display = 'block';
+
+    ce.bookmarks.forEach(b => {
+      const fromInfo = ce.currencies[b.from] || { flag: '', code: b.from };
+      const toInfo   = ce.currencies[b.to]   || { flag: '', code: b.to };
+      const rate     = ce.calculatePairRate(b.from, b.to);
+
+      const card = document.createElement('div');
+      card.className = 'bookmark-card';
+      card.innerHTML = `
+        <div class="bookmark-card-top">
+          <span>${fromInfo.flag} ${b.from} ➔ ${toInfo.flag} ${b.to}</span>
+          <button class="bookmark-remove-btn" title="Remove Bookmark">✕</button>
+        </div>
+        <div class="bookmark-card-rate">1 ${b.from} = ${ce.formatCurrencyValue(rate)} ${b.to}</div>
+      `;
+
+      card.addEventListener('click', (e) => {
+        if (e.target.classList.contains('bookmark-remove-btn')) {
+          e.stopPropagation();
+          ce.toggleBookmark(b.from, b.to);
+          window.soundManager.playClick('action');
+          showToast(`Removed ${b.from} ➔ ${b.to} from bookmarks`);
+          renderCurrencyView();
+          return;
+        }
+
+        window.soundManager.playClick('default');
+        ce.setFromCurrency(b.from);
+        ce.setToCurrency(b.to);
+        renderCurrencyView();
+        showToast(`Loaded ${b.from} ➔ ${b.to}`);
+      });
+
+      bookmarksGrid.appendChild(card);
+    });
+  }
+
+  if (bookmarkCurrentBtn) {
+    bookmarkCurrentBtn.addEventListener('click', () => {
+      window.soundManager.playClick('action');
+      const ce = window.currencyEngine;
+      const added = ce.toggleBookmark(ce.fromCurrency, ce.toCurrency);
+      showToast(added ? `Bookmarked ${ce.fromCurrency} ➔ ${ce.toCurrency}` : `Removed ${ce.fromCurrency} ➔ ${ce.toCurrency} from bookmarks`);
+      renderCurrencyView();
+    });
   }
 
   function renderQuickMatrix() {
@@ -320,35 +457,137 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderCurrencyList(query) {
     const q   = query.toLowerCase().trim();
-    const all = window.currencyEngine.currencies;
+    const ce  = window.currencyEngine;
+    const all = ce.currencies;
     currencyListContainer.innerHTML = '';
 
-    Object.keys(all).forEach(code => {
+    // Sort codes so favorites come first
+    const sortedCodes = Object.keys(all).sort((a, b) => {
+      const isFavA = ce.isFavorite(a) ? 1 : 0;
+      const isFavB = ce.isFavorite(b) ? 1 : 0;
+      return isFavB - isFavA;
+    });
+
+    sortedCodes.forEach(code => {
       const c = all[code];
       if (!c.code.toLowerCase().includes(q) && !c.name.toLowerCase().includes(q)) return;
 
+      const isFav = ce.isFavorite(code);
       const item = document.createElement('div');
       item.className = 'currency-option-item';
       item.innerHTML = `
         <div class="currency-info">
           <span class="flag-icon">${c.flag}</span>
           <div>
-            <div class="currency-code-text">${c.code}${c.isEspees ? ' 🌟' : ''}</div>
+            <div class="currency-code-text">${c.code}${c.isEspees ? ' 🌟' : ''} ${isFav ? '<span style="font-size:0.7rem; color:#ffb700; background:rgba(255,183,0,0.15); padding:2px 6px; border-radius:4px; margin-left:4px;">⭐ Fav</span>' : ''}</div>
             <div class="currency-name-text">${c.name}</div>
           </div>
         </div>
-        <span style="color:var(--text-secondary)">${c.symbol}</span>`;
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="color:var(--text-secondary)">${c.symbol}</span>
+          <button class="fav-currency-btn" title="Toggle Favorite" style="background:transparent; border:none; cursor:pointer; font-size:1rem; padding:4px;">${isFav ? '⭐' : '☆'}</button>
+        </div>`;
 
-      item.addEventListener('click', () => {
+      item.addEventListener('click', (e) => {
+        if (e.target.classList.contains('fav-currency-btn')) {
+          e.stopPropagation();
+          const favNow = ce.toggleFavorite(c.code);
+          window.soundManager.playClick('action');
+          showToast(favNow ? `Added ${c.code} to favorites` : `Removed ${c.code} from favorites`);
+          renderCurrencyList(query);
+          return;
+        }
+
         window.soundManager.playClick('default');
-        if (activePickingTarget === 'from') window.currencyEngine.setFromCurrency(c.code);
-        else                                window.currencyEngine.setToCurrency(c.code);
+        if (activePickingTarget === 'from') ce.setFromCurrency(c.code);
+        else                                ce.setToCurrency(c.code);
         currencyPickerModal.classList.remove('active');
         renderCurrencyView();
       });
       currencyListContainer.appendChild(item);
     });
   }
+
+  // -------------------------------------------------------
+  // UNIT CONVERTER RENDERER & CONTROLLER
+  // -------------------------------------------------------
+  function renderUnitView() {
+    const ue = window.unitEngine;
+    const catKeys = Object.keys(ue.categories);
+
+    // Render category pills
+    unitCategoryBar.innerHTML = '';
+    catKeys.forEach(catKey => {
+      const cat = ue.categories[catKey];
+      const pill = document.createElement('button');
+      pill.className = `unit-cat-pill ${catKey === ue.currentCategory ? 'active' : ''}`;
+      pill.innerHTML = `<span>${cat.icon}</span> <span>${cat.name}</span>`;
+      pill.addEventListener('click', () => {
+        window.soundManager.playClick('default');
+        ue.setCategory(catKey);
+        renderUnitView();
+      });
+      unitCategoryBar.appendChild(pill);
+    });
+
+    // Render select dropdown options
+    const currentUnits = ue.categories[ue.currentCategory].units;
+    const unitKeys = Object.keys(currentUnits);
+
+    unitFromSelect.innerHTML = '';
+    unitToSelect.innerHTML = '';
+
+    unitKeys.forEach(uKey => {
+      const u = currentUnits[uKey];
+      const optFrom = document.createElement('option');
+      optFrom.value = uKey;
+      optFrom.textContent = u.name;
+      if (uKey === ue.fromUnit) optFrom.selected = true;
+      unitFromSelect.appendChild(optFrom);
+
+      const optTo = document.createElement('option');
+      optTo.value = uKey;
+      optTo.textContent = u.name;
+      if (uKey === ue.toUnit) optTo.selected = true;
+      unitToSelect.appendChild(optTo);
+    });
+
+    unitFromInput.value = ue.fromAmount;
+    unitToOutput.value = ue.formatValue(ue.toAmount);
+
+    unitFormulaDisplay.innerHTML = `<span class="rate-highlight">${ue.getDirectFormula()}</span>`;
+
+    // Render unit quick matrix grid
+    const matrixData = ue.getQuickMatrix();
+    unitQuickMatrixGrid.innerHTML = '';
+    matrixData.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'matrix-card';
+      card.innerHTML = `<span class="matrix-from">${item.fromStr}</span><span class="matrix-to">${item.toStr}</span>`;
+      unitQuickMatrixGrid.appendChild(card);
+    });
+  }
+
+  unitFromSelect.addEventListener('change', (e) => {
+    window.unitEngine.setFromUnit(e.target.value);
+    renderUnitView();
+  });
+
+  unitToSelect.addEventListener('change', (e) => {
+    window.unitEngine.setToUnit(e.target.value);
+    renderUnitView();
+  });
+
+  unitFromInput.addEventListener('input', (e) => {
+    window.unitEngine.setFromAmount(e.target.value);
+    renderUnitView();
+  });
+
+  unitSwapBtn.addEventListener('click', () => {
+    window.soundManager.playClick('action');
+    window.unitEngine.swapUnits();
+    renderUnitView();
+  });
 
   // -------------------------------------------------------
   // HISTORY MODAL

@@ -45,6 +45,13 @@ class CurrencyEngine {
     this.isLive      = false;
     this.lastUpdated = null;
 
+    // Bookmarks (pairs) and Favorites (currencies)
+    this.bookmarks = [];
+    this.favorites = ['ESP', 'NGN', 'USD'];
+
+    this.loadBookmarks();
+    this.loadFavorites();
+
     // Load cached world rates (ESP is deliberately excluded from cache)
     this._loadCachedRates();
 
@@ -53,6 +60,87 @@ class CurrencyEngine {
 
     // Set initial output
     this.recalculate();
+  }
+
+  /* ---------------------------------------------------
+     BOOKMARKS & FAVORITES MANAGEMENT
+  --------------------------------------------------- */
+  loadBookmarks() {
+    try {
+      const saved = localStorage.getItem('calcmaster_currency_bookmarks');
+      if (saved) {
+        this.bookmarks = JSON.parse(saved);
+      } else {
+        // Default bookmarks
+        this.bookmarks = [
+          { from: 'ESP', to: 'NGN' },
+          { from: 'USD', to: 'ESP' },
+          { from: 'EUR', to: 'USD' }
+        ];
+        this.saveBookmarks();
+      }
+    } catch (e) {
+      this.bookmarks = [{ from: 'ESP', to: 'NGN' }];
+    }
+  }
+
+  saveBookmarks() {
+    try {
+      localStorage.setItem('calcmaster_currency_bookmarks', JSON.stringify(this.bookmarks));
+    } catch (e) {}
+  }
+
+  isBookmarked(from, to) {
+    return this.bookmarks.some(b => b.from === from && b.to === to);
+  }
+
+  toggleBookmark(from, to) {
+    const idx = this.bookmarks.findIndex(b => b.from === from && b.to === to);
+    if (idx >= 0) {
+      this.bookmarks.splice(idx, 1);
+      this.saveBookmarks();
+      return false; // unbookmarked
+    } else {
+      this.bookmarks.push({ from, to });
+      this.saveBookmarks();
+      return true; // bookmarked
+    }
+  }
+
+  loadFavorites() {
+    try {
+      const saved = localStorage.getItem('calcmaster_currency_favorites');
+      if (saved) {
+        this.favorites = JSON.parse(saved);
+      }
+    } catch (e) {}
+  }
+
+  saveFavorites() {
+    try {
+      localStorage.setItem('calcmaster_currency_favorites', JSON.stringify(this.favorites));
+    } catch (e) {}
+  }
+
+  isFavorite(code) {
+    return this.favorites.includes(code);
+  }
+
+  toggleFavorite(code) {
+    const idx = this.favorites.indexOf(code);
+    if (idx >= 0) {
+      this.favorites.splice(idx, 1);
+    } else {
+      this.favorites.push(code);
+    }
+    this.saveFavorites();
+    return this.isFavorite(code);
+  }
+
+  calculatePairRate(from, to) {
+    const fromRate = this.rates[from] || 1.0;
+    const toRate   = this.rates[to]   || 1.0;
+    return (1 / fromRate) * toRate;
   }
 
   /* ---------------------------------------------------

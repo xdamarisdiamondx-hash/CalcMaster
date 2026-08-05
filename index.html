@@ -18,6 +18,7 @@
         <span class="brand-name">CalcMaster</span>
       </div>
       <div class="header-actions">
+        <button class="icon-btn" id="themeToggleHeaderBtn" title="Toggle Light/Dark Theme" aria-label="Toggle Theme">☀️</button>
         <button class="icon-btn" id="historyHeaderBtn" title="Calculation History" aria-label="History">🕒</button>
         <button class="icon-btn" id="helpHeaderBtn" title="How to Use / Walkthrough" aria-label="Help">❓</button>
         <button class="icon-btn" id="settingsHeaderBtn" title="App Settings" aria-label="Settings">⚙️</button>
@@ -31,6 +32,9 @@
       </button>
       <button class="nav-tab" id="tabCurrency" aria-selected="false">
         <span>💱 Currency</span>
+      </button>
+      <button class="nav-tab" id="tabUnit" aria-selected="false">
+        <span>📏 Units</span>
       </button>
     </nav>
 
@@ -153,9 +157,14 @@
             </div>
           </div>
 
-          <!-- Direct Exchange Rate Banner -->
-          <div class="exchange-rate-display" id="exchangeRateDisplay">
-            1 USD = 1.00 ESP
+          <!-- Direct Exchange Rate Banner with Bookmark Action -->
+          <div class="rate-banner-wrapper">
+            <div class="exchange-rate-display" id="exchangeRateDisplay">
+              1 USD = 1.00 ESP
+            </div>
+            <button class="bookmark-pair-btn" id="bookmarkCurrentBtn" title="Save/Bookmark Pair" aria-label="Bookmark Pair">
+              <span id="bookmarkStarIcon">☆</span>
+            </button>
           </div>
 
           <!-- Dedicated Espees Highlight Banner -->
@@ -169,10 +178,74 @@
 
         </div>
 
+        <!-- Bookmarked Currency Pairs -->
+        <div class="bookmarks-section" id="bookmarksSection">
+          <div class="quick-matrix-title">⭐ Bookmarked Pairs</div>
+          <div class="bookmarks-grid" id="bookmarksGrid">
+            <!-- Dynamic bookmarked pair cards -->
+          </div>
+        </div>
+
         <!-- Quick Matrix Table -->
         <div>
           <div class="quick-matrix-title">Quick Conversion Reference</div>
           <div class="quick-matrix-grid" id="quickMatrixGrid">
+            <!-- Dynamic entries -->
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ==================================================
+           3. UNIT CONVERTER MODULE VIEW
+      ================================================== -->
+      <section class="view-section unit-view" id="viewUnit">
+
+        <!-- Category Selector Bar -->
+        <div class="unit-category-bar" id="unitCategoryBar">
+          <!-- Dynamic Category Pills -->
+        </div>
+
+        <div class="converter-card">
+
+          <!-- "From" Unit Row -->
+          <div class="currency-row">
+            <label class="currency-label" for="unitFromInput">From</label>
+            <div class="currency-input-group">
+              <select id="unitFromSelect" class="unit-select">
+                <!-- Dynamic Options -->
+              </select>
+              <input type="number" id="unitFromInput" class="amount-input" value="1" placeholder="0">
+            </div>
+          </div>
+
+          <!-- Swap Button Divider -->
+          <div class="swap-divider">
+            <button class="swap-btn" id="unitSwapBtn" title="Swap Units" aria-label="Swap Units">⇄</button>
+          </div>
+
+          <!-- "To" Unit Row -->
+          <div class="currency-row">
+            <label class="currency-label" for="unitToOutput">To</label>
+            <div class="currency-input-group">
+              <select id="unitToSelect" class="unit-select">
+                <!-- Dynamic Options -->
+              </select>
+              <input type="text" id="unitToOutput" class="amount-input" readonly placeholder="0">
+            </div>
+          </div>
+
+          <!-- Conversion Formula Display Banner -->
+          <div class="exchange-rate-display" id="unitFormulaDisplay">
+            1 m = 0.001 km
+          </div>
+
+        </div>
+
+        <!-- Quick Reference Matrix Table -->
+        <div>
+          <div class="quick-matrix-title">Quick Conversion Reference</div>
+          <div class="quick-matrix-grid" id="unitQuickMatrixGrid">
             <!-- Dynamic entries -->
           </div>
         </div>
@@ -273,6 +346,17 @@
         </div>
         <div class="modal-body">
 
+          <!-- Light / Dark Theme Toggle -->
+          <div class="setting-row">
+            <div class="setting-info">
+              <span class="setting-title">Appearance Theme</span>
+              <span class="setting-desc">Switch between Dark and Light mode</span>
+            </div>
+            <button class="icon-btn" id="themeToggleSettingsBtn" style="background:var(--bg-tertiary); width:auto; padding:6px 14px; border-radius:var(--radius-sm); font-size:0.85rem; font-weight:600; display:flex; gap:6px; align-items:center;">
+              <span id="themeToggleSettingsIcon">☀️</span> <span id="themeToggleSettingsText">Light</span>
+            </button>
+          </div>
+
           <!-- Sound Feedback Toggle -->
           <div class="setting-row">
             <div class="setting-info">
@@ -326,6 +410,7 @@
   <script src="history.js"></script>
   <script src="calculator.js"></script>
   <script src="currency.js"></script>
+  <script src="unit.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
