@@ -80,6 +80,30 @@ document.addEventListener('DOMContentLoaded', () => {
   let currencyInitialized      = false;
 
   // -------------------------------------------------------
+  // ICON HELPERS — build <svg> markup from the #i-* sprite
+  // -------------------------------------------------------
+  function iconSvg(name, opts = {}) {
+    const cls   = opts.cls   || 'icon';
+    const fill  = opts.fill  || 'none';
+    const title = opts.title ? ` role="img" aria-label="${opts.title}"` : ' aria-hidden="true"';
+    return `<svg class="${cls}" viewBox="0 0 24 24" fill="${fill}" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"${title}><use href="#${name}"></use></svg>`;
+  }
+
+  function starSvg(filled, cls = 'icon') {
+    return iconSvg('i-star', { cls, fill: filled ? 'currentColor' : 'none' });
+  }
+
+  function flagHtml(c) {
+    if (!c) return '<span class="flag-icon"></span>';
+    if (c.isEspees || !c.flag) {
+      return `<span class="flag-icon flag-icon--svg">${iconSvg('i-coins')}</span>`;
+    }
+    return `<span class="flag-icon">${c.flag}</span>`;
+  }
+
+  const caretHtml = () => iconSvg('i-chevron-down', { cls: 'icon icon-sm selector-caret' });
+
+  // -------------------------------------------------------
   // VIEW SWITCHER — single source of truth
   // -------------------------------------------------------
   function showView(viewName) {
@@ -144,17 +168,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (theme === 'light') {
       if (themeToggleHeaderBtn) {
-        themeToggleHeaderBtn.textContent = '🌙';
+        themeToggleHeaderBtn.dataset.icon = 'moon';
         themeToggleHeaderBtn.title = 'Switch to Dark Mode';
       }
-      if (themeToggleSettingsIcon) themeToggleSettingsIcon.textContent = '🌙';
+      if (themeToggleSettingsIcon) themeToggleSettingsIcon.dataset.icon = 'moon';
       if (themeToggleSettingsText) themeToggleSettingsText.textContent = 'Dark Mode';
     } else {
       if (themeToggleHeaderBtn) {
-        themeToggleHeaderBtn.textContent = '☀️';
+        themeToggleHeaderBtn.dataset.icon = 'sun';
         themeToggleHeaderBtn.title = 'Switch to Light Mode';
       }
-      if (themeToggleSettingsIcon) themeToggleSettingsIcon.textContent = '☀️';
+      if (themeToggleSettingsIcon) themeToggleSettingsIcon.dataset.icon = 'sun';
       if (themeToggleSettingsText) themeToggleSettingsText.textContent = 'Light Mode';
     }
   }
@@ -261,8 +285,9 @@ document.addEventListener('DOMContentLoaded', () => {
     window.soundManager.playClick('action');
     const isVisible = sciKeypad.classList.toggle('visible');
     toggleSciBtn.classList.toggle('active', isVisible);
-    const span = toggleSciBtn.querySelector('span');
-    if (span) span.textContent = isVisible ? '🔢 Basic Mode' : '🔬 Scientific Mode';
+    toggleSciBtn.dataset.icon = isVisible ? 'basic' : 'sci';
+    const label = toggleSciBtn.querySelector('span');
+    if (label) label.textContent = isVisible ? 'Basic Mode' : 'Scientific Mode';
   });
 
   // -------------------------------------------------------
@@ -327,14 +352,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const fromInfo = ce.currencies[ce.fromCurrency] || { flag: '', code: ce.fromCurrency };
     const toInfo   = ce.currencies[ce.toCurrency]   || { flag: '', code: ce.toCurrency };
 
-    fromSelectorBtn.innerHTML = `<span>${fromInfo.flag} ${fromInfo.code}</span> <span style="font-size:0.75rem">▼</span>`;
-    toSelectorBtn.innerHTML   = `<span>${toInfo.flag}   ${toInfo.code}</span> <span style="font-size:0.75rem">▼</span>`;
+    fromSelectorBtn.innerHTML = `<span>${flagHtml(fromInfo)} ${fromInfo.code}</span> ${caretHtml()}`;
+    toSelectorBtn.innerHTML   = `<span>${flagHtml(toInfo)} ${toInfo.code}</span> ${caretHtml()}`;
 
     fromAmountInput.value = ce.fromAmount;
     toAmountOutput.value  = ce.formatCurrencyValue(ce.toAmount);
 
     rateStatusPill.innerHTML = ce.isLive
-      ? `<span class="status-dot"></span> Live Rates (${ce.lastUpdated})`
+      ? `<span class="status-dot"></span> Live Rates · ${ce.rateSource || 'api'} (${ce.lastUpdated})`
       : `<span class="status-dot offline"></span> Cached (${ce.lastUpdated || 'Offline'})`;
 
     const directRate = ce.getDirectRate();
@@ -343,7 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Bookmark star status
     const isBookmarked = ce.isBookmarked(ce.fromCurrency, ce.toCurrency);
-    if (bookmarkStarIcon) bookmarkStarIcon.textContent = isBookmarked ? '⭐' : '☆';
+    if (bookmarkStarIcon) bookmarkStarIcon.innerHTML = starSvg(isBookmarked);
     if (bookmarkCurrentBtn) bookmarkCurrentBtn.classList.toggle('active', isBookmarked);
 
     renderBookmarksGrid();
@@ -371,8 +396,8 @@ document.addEventListener('DOMContentLoaded', () => {
       card.className = 'bookmark-card';
       card.innerHTML = `
         <div class="bookmark-card-top">
-          <span>${fromInfo.flag} ${b.from} ➔ ${toInfo.flag} ${b.to}</span>
-          <button class="bookmark-remove-btn" title="Remove Bookmark">✕</button>
+          <span class="bookmark-pair-label">${flagHtml(fromInfo)} ${b.from} ${iconSvg('i-arrow-right', { cls: 'icon icon-sm pair-arrow' })} ${flagHtml(toInfo)} ${b.to}</span>
+          <button class="bookmark-remove-btn" title="Remove Bookmark">${iconSvg('i-x')}</button>
         </div>
         <div class="bookmark-card-rate">1 ${b.from} = ${ce.formatCurrencyValue(rate)} ${b.to}</div>
       `;
@@ -435,7 +460,14 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast('Fetching latest exchange rates...');
     const result = await window.currencyEngine.fetchLiveRates();
     renderCurrencyView();
-    showToast(result.success ? 'Exchange rates updated!' : 'Using cached offline rates');
+
+    if (result.error === 'invalid-key') {
+      showToast(`API key rejected — check CURRENCY_API_KEY in .env`);
+    } else if (result.success) {
+      showToast(`Exchange rates updated via ${result.source}!`);
+    } else {
+      showToast('Using cached offline rates');
+    }
   });
 
   // -------------------------------------------------------
@@ -477,15 +509,15 @@ document.addEventListener('DOMContentLoaded', () => {
       item.className = 'currency-option-item';
       item.innerHTML = `
         <div class="currency-info">
-          <span class="flag-icon">${c.flag}</span>
+          ${flagHtml(c)}
           <div>
-            <div class="currency-code-text">${c.code}${c.isEspees ? ' 🌟' : ''} ${isFav ? '<span style="font-size:0.7rem; color:#ffb700; background:rgba(255,183,0,0.15); padding:2px 6px; border-radius:4px; margin-left:4px;">⭐ Fav</span>' : ''}</div>
+            <div class="currency-code-text">${c.code}${isFav ? `<span class="fav-badge">${starSvg(true)}<span>Fav</span></span>` : ''}</div>
             <div class="currency-name-text">${c.name}</div>
           </div>
         </div>
         <div style="display:flex; align-items:center; gap:10px;">
-          <span style="color:var(--text-secondary)">${c.symbol}</span>
-          <button class="fav-currency-btn" title="Toggle Favorite" style="background:transparent; border:none; cursor:pointer; font-size:1rem; padding:4px;">${isFav ? '⭐' : '☆'}</button>
+          ${c.isEspees ? iconSvg('i-coins', { cls: 'icon icon-sm' }) : `<span style="color:var(--text-secondary)">${c.symbol}</span>`}
+          <button class="fav-currency-btn${isFav ? ' is-fav' : ''}" title="Toggle Favorite" style="background:transparent; border:none; cursor:pointer; padding:4px;">${starSvg(isFav)}</button>
         </div>`;
 
       item.addEventListener('click', (e) => {
@@ -521,7 +553,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const cat = ue.categories[catKey];
       const pill = document.createElement('button');
       pill.className = `unit-cat-pill ${catKey === ue.currentCategory ? 'active' : ''}`;
-      pill.innerHTML = `<span>${cat.icon}</span> <span>${cat.name}</span>`;
+      pill.innerHTML = `${iconSvg(cat.icon)} <span>${cat.name}</span>`;
       pill.addEventListener('click', () => {
         window.soundManager.playClick('default');
         ue.setCategory(catKey);

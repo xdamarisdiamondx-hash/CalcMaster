@@ -12,7 +12,7 @@ class CurrencyEngine {
       EUR: { code: 'EUR', name: 'Euro',                 symbol: '€',    flag: '🇪🇺' },
       GBP: { code: 'GBP', name: 'British Pound',       symbol: '£',    flag: '🇬🇧' },
       NGN: { code: 'NGN', name: 'Nigerian Naira',       symbol: '₦',    flag: '🇳🇬' },
-      ESP: { code: 'ESP', name: 'Espees (Digital)',     symbol: '🈹',   flag: '🌟', isEspees: true },
+      ESP: { code: 'ESP', name: 'Espees (Digital)',     symbol: 'ESP',  flag: '', isEspees: true },
       CAD: { code: 'CAD', name: 'Canadian Dollar',     symbol: 'CA$',  flag: '🇨🇦' },
       AUD: { code: 'AUD', name: 'Australian Dollar',   symbol: 'A$',   flag: '🇦🇺' },
       JPY: { code: 'JPY', name: 'Japanese Yen',        symbol: '¥',    flag: '🇯🇵' },
@@ -27,9 +27,10 @@ class CurrencyEngine {
       GHS: { code: 'GHS', name: 'Ghanaian Cedi',       symbol: 'GH₵',  flag: '🇬🇭' }
     };
 
-    // Base fallback rates relative to USD (ESP is excluded — always computed)
+    // Base fallback rates relative to USD (ESP is excluded — always computed).
+    // Offline snapshot from exchangerate-api — only used when every endpoint fails.
     this.fallbackRates = {
-      USD: 1.0, EUR: 0.92, GBP: 0.78, NGN: 2050.0, CAD: 1.36,
+      USD: 1.0, EUR: 0.92, GBP: 0.78, NGN: 1330.0, CAD: 1.36,
       AUD: 1.52, JPY: 154.5, INR: 83.5, CNY: 7.24, BRL: 5.45,
       ZAR: 18.2, CHF: 0.90, AED: 3.67, SAR: 3.75, KES: 130.0, GHS: 15.2
     };
@@ -44,6 +45,8 @@ class CurrencyEngine {
 
     this.isLive      = false;
     this.lastUpdated = null;
+    this.rateSource  = null;        // which endpoint produced the current rates
+    this.lastProviderError = null;  // e.g. 'invalid-key' — surfaced to the UI
 
     // Bookmarks (pairs) and Favorites (currencies)
     this.bookmarks = [];
@@ -166,6 +169,7 @@ class CurrencyEngine {
           this.rates = merged;
           this.lastUpdated = parsed.lastUpdated || null;
           this.isLive = parsed.isLive || false;
+          this.rateSource = parsed.source || null;
         }
       }
     } catch (e) {
@@ -180,35 +184,186 @@ class CurrencyEngine {
       localStorage.setItem('calcmaster_rates_v2', JSON.stringify({
         rates: toSave,
         lastUpdated: this.lastUpdated,
-        isLive: this.isLive
+        isLive: this.isLive,
+        source: this.rateSource
       }));
     } catch (e) {}
   }
 
-  async fetchLiveRates() {
+  /* ---------------------------------------------------
+     PROVIDER CONFIG (config.js)
+     The key lives in config.js so users never type one.
+  --------------------------------------------------- */
+  _providerConfig() {
+    const cfg = (window.CALC_CONFIG && window.CALC_CONFIG.currency) || null;
+    if (!cfg) return null;
+
+    const key = String(cfg.apiKey || '').trim();
+    // Empty, or an unedited placeholder -> provider disabled, use fallbacks
+    if (!key || /(paste|your[_-]?api[_-]?key|xxxxxx|replace[_-]?me)/i.test(key)) return null;
+
+    return Object.assign({}, cfg, { apiKey: key });
+  }
+
+  _buildProviderUrl(cfg, base = 'USD') {
+    const template = cfg.endpoint || 'https://v6.exchangerate-api.com/v6/{key}/latest/{base}';
+    return template
+      .replace('{key}', encodeURIComponent(cfg.apiKey))
+      .replace('{base}', encodeURIComponent(base));
+  }
+
+  async _fetchJson(url, timeoutMs) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs || 8000);
     try {
-      const res = await fetch('https://api.frankfurter.app/latest?from=USD');
-      if (!res.ok) throw new Error('API error');
-      const data = await res.json();
-      if (data && data.rates) {
-        const updated = { USD: 1.0, ...data.rates };
-        delete updated.ESP; // remove any ESP the API might return
-        this.rates = updated;
+      const res = await fetch(url, { signal: controller.signal });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.json();
+    } finally {
+      clearTimeout(timer);
+    }
+  }
 
-        // Reapply permanent Espees rate after live update
-        this._applyEspeesRate();
+  /* Normalise any provider payload into USD-relative rates.
+     Returns { rates, error } — rates is null when unusable. */
+  _normaliseProviderRates(data) {
+    if (!data) return { rates: null, error: 'empty-response' };
 
-        this.isLive = true;
-        this.lastUpdated = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        this._saveRatesToCache();
-        this.recalculate();
-        return { success: true, isLive: true };
+    // exchangerate-api v6 error body: { result: 'error', 'error-type': 'invalid-key' }
+    if (data.result === 'error') {
+      return { rates: null, error: data['error-type'] || 'provider-error' };
+    }
+
+    const raw = data.rates;
+    if (!raw || typeof raw !== 'object') return { rates: null, error: 'bad-payload' };
+
+    // Express everything per 1 USD regardless of the provider's base currency
+    const perBaseUsd = raw.USD || 1;
+    const usdRelative = { USD: 1.0 };
+    Object.keys(raw).forEach(code => {
+      usdRelative[code] = raw[code] / perBaseUsd;
+    });
+
+    return { rates: usdRelative, error: null };
+  }
+
+  /* Commit a fresh USD-relative rate set. Espees is stripped first and
+     always recomputed from the fixed 2,050 NGN rate — never from an API. */
+  _applyLiveRates(usdRates, source) {
+    const next = Object.assign({}, usdRates);
+    delete next.ESP;
+
+    this.rates = next;
+    this._applyEspeesRate();
+
+    this.isLive = true;
+    this.rateSource = source;
+    this.lastUpdated = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    this._saveRatesToCache();
+    this.recalculate();
+  }
+
+  /* Which provider error codes mean "the key is wrong" — as opposed to
+     'no-key', which simply means no key is configured yet. */
+  _isKeyError(err) {
+    return typeof err === 'string' && err !== 'no-key' &&
+           /(key|account|quota|forbidden|denied|expired)/i.test(err);
+  }
+
+  async fetchLiveRates() {
+    this.lastProviderError = null;
+    const cfg = this._providerConfig();
+
+    // -------------------------------------------------------
+    // 1) Local proxy (/api/rates) — server.ps1 reads the key
+    //    from .env, so it never reaches the browser. This is
+    //    also the ONLY way to use an exchangerate-api key:
+    //    their v6 endpoint sends no CORS headers, so a direct
+    //    browser call always fails.
+    // -------------------------------------------------------
+    try {
+      const body = await this._fetchJson('/api/rates', 15000);
+      if (body && body.ok && body.payload) {
+        const norm = this._normaliseProviderRates(body.payload);
+        if (norm.rates) {
+          this._applyLiveRates(norm.rates, body.source || 'exchangerate-api.com');
+          return { success: true, isLive: true, source: this.rateSource };
+        }
+        if (this._isKeyError(norm.error)) this.lastProviderError = 'invalid-key';
+      } else if (body && this._isKeyError(body.error)) {
+        // The proxy answered, but the key in .env was rejected
+        console.warn('[CalcMaster] .env API key rejected by the provider:', body.error);
+        this.lastProviderError = 'invalid-key';
       }
     } catch (err) {
-      this.isLive = false;
-      if (!this.lastUpdated) this.lastUpdated = 'Offline';
-      return { success: false, isLive: false };
+      // No proxy available (file:// or a plain static host) — continue
     }
+
+    // -------------------------------------------------------
+    // 2) Key from config.js, called directly (only works on
+    //    hosts that return CORS headers)
+    // -------------------------------------------------------
+    if (cfg) {
+      try {
+        const data = await this._fetchJson(this._buildProviderUrl(cfg), cfg.timeoutMs);
+        const norm = this._normaliseProviderRates(data);
+
+        if (norm.rates) {
+          this._applyLiveRates(norm.rates, cfg.provider);
+          return { success: true, isLive: true, source: cfg.provider, error: this.lastProviderError };
+        }
+
+        if (this._isKeyError(norm.error)) {
+          console.warn('[CalcMaster] Currency API key rejected:', norm.error);
+          this.lastProviderError = 'invalid-key';
+        } else {
+          console.warn('[CalcMaster] Currency API unusable payload:', norm.error);
+        }
+      } catch (err) {
+        console.warn('[CalcMaster] Currency API unreachable:', err && err.message);
+      }
+    }
+
+    // -------------------------------------------------------
+    // 3) Keyless exchangerate-api endpoint — no key required,
+    //    CORS-enabled, and always current
+    // -------------------------------------------------------
+    try {
+      const data = await this._fetchJson('https://api.exchangerate-api.com/v4/latest/USD', 8000);
+      const norm = this._normaliseProviderRates(data);
+      if (norm.rates) {
+        this._applyLiveRates(norm.rates, 'exchangerate-api.com keyless');
+        return { success: true, isLive: true, source: this.rateSource, error: this.lastProviderError };
+      }
+    } catch (err) {
+      // next endpoint
+    }
+
+    // -------------------------------------------------------
+    // 4) Secondary keyless endpoint
+    // -------------------------------------------------------
+    try {
+      const data = await this._fetchJson('https://api.frankfurter.app/latest?from=USD', 8000);
+      if (data && data.rates) {
+        this._applyLiveRates({ USD: 1.0, ...data.rates }, 'frankfurter.app');
+        return { success: true, isLive: true, source: this.rateSource, error: this.lastProviderError };
+      }
+    } catch (err) {
+      // next endpoint
+    }
+
+    // -------------------------------------------------------
+    // 5) Everything failed — keep whatever is cached on device
+    // -------------------------------------------------------
+    this.isLive = false;
+    if (!this.lastUpdated) this.lastUpdated = 'Offline';
+    return {
+      success: false,
+      isLive: false,
+      source: this.rateSource || 'cache',
+      error: this.lastProviderError
+    };
   }
 
   setFromCurrency(code) {

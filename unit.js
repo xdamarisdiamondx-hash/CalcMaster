@@ -7,7 +7,7 @@ class UnitEngine {
     this.categories = {
       length: {
         name: 'Length',
-        icon: '📏',
+        icon: 'i-ruler',
         baseUnit: 'm',
         units: {
           m:  { name: 'Meters (m)',           ratio: 1 },
@@ -22,7 +22,7 @@ class UnitEngine {
       },
       mass: {
         name: 'Mass / Weight',
-        icon: '⚖️',
+        icon: 'i-scale',
         baseUnit: 'kg',
         units: {
           kg:  { name: 'Kilograms (kg)',      ratio: 1 },
@@ -35,7 +35,7 @@ class UnitEngine {
       },
       temperature: {
         name: 'Temperature',
-        icon: '🌡️',
+        icon: 'i-thermometer',
         custom: true, // Needs special formula
         units: {
           c: { name: 'Celsius (°C)',       symbol: '°C' },
@@ -45,7 +45,7 @@ class UnitEngine {
       },
       volume: {
         name: 'Volume',
-        icon: '🧪',
+        icon: 'i-beaker',
         baseUnit: 'l',
         units: {
           l:   { name: 'Liters (L)',          ratio: 1 },
@@ -60,7 +60,7 @@ class UnitEngine {
       },
       area: {
         name: 'Area',
-        icon: '📐',
+        icon: 'i-area',
         baseUnit: 'sq_m',
         units: {
           sq_m:  { name: 'Square Meters (m²)',      ratio: 1 },
@@ -73,7 +73,7 @@ class UnitEngine {
       },
       speed: {
         name: 'Speed',
-        icon: '🚀',
+        icon: 'i-gauge',
         baseUnit: 'mps',
         units: {
           mps:  { name: 'Meters / sec (m/s)',     ratio: 1 },
@@ -84,7 +84,7 @@ class UnitEngine {
       },
       storage: {
         name: 'Digital Data',
-        icon: '💾',
+        icon: 'i-hard-drive',
         baseUnit: 'b',
         units: {
           b:  { name: 'Bytes (B)',                ratio: 1 },

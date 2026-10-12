@@ -162,7 +162,7 @@ body {
 .icon-btn {
   background: transparent;
   border: none;
-  color: var(--text-secondary);
+  color: var(--accent-orange);
   width: 38px;
   height: 38px;
   border-radius: var(--radius-full);
@@ -175,8 +175,9 @@ body {
 }
 
 .icon-btn:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
+  background: var(--accent-orange-glow);
+  color: var(--accent-orange-hover);
+  box-shadow: 0 0 0 1px var(--border-active);
 }
 
 .icon-btn:active {
@@ -187,6 +188,185 @@ body {
   color: var(--accent-orange);
   background: var(--bg-card);
 }
+
+/* ----------------------------------------------------
+   INLINE SVG ICONS (replaces emoji glyph buttons)
+---------------------------------------------------- */
+.icon-sprite {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+  display: block;
+  flex: none;
+  /* CSS beats the 1.8 presentation attribute — bolder line weight reads
+     cleaner at 14–20px and gives the icons more presence */
+  stroke-width: 2;
+}
+
+.icon-sm {
+  width: 14px;
+  height: 14px;
+}
+
+.icon-lg {
+  width: 24px;
+  height: 24px;
+}
+
+.icon-btn .icon {
+  width: 19px;
+  height: 19px;
+}
+
+/* Icon pairs — data-icon holds which state is visible */
+.icon-set {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-set > svg {
+  display: none;
+}
+
+.icon-set[data-icon="sun"] > .i-sun,
+.icon-set[data-icon="moon"] > .i-moon,
+.icon-set[data-icon="sci"] > .i-sci,
+.icon-set[data-icon="basic"] > .i-basic {
+  display: block;
+}
+
+/* ----------------------------------------------------
+   ACCENT COLORING — icons pick up the app's orange
+---------------------------------------------------- */
+.header-actions .icon-btn .icon {
+  color: var(--accent-orange);
+  filter: drop-shadow(0 1px 5px var(--accent-orange-glow));
+}
+
+.header-actions .icon-btn:hover {
+  color: var(--accent-orange-hover);
+}
+
+.header-actions .icon-btn:hover .icon {
+  color: var(--accent-orange-hover);
+  filter: drop-shadow(0 0 7px var(--accent-orange));
+  transform: scale(1.06);
+}
+
+/* Per-component icon sizing */
+.nav-tab .icon { width: 17px; height: 17px; color: var(--accent-orange); }
+.nav-tab.active .icon { color: #ffffff; }
+
+.toggle-sciemode-btn .icon { width: 15px; height: 15px; color: var(--accent-orange); }
+
+.swap-btn .icon { width: 20px; height: 20px; }
+.swap-btn:hover { box-shadow: 0 0 0 4px var(--accent-orange-glow), var(--shadow-sm); }
+
+.unit-cat-pill .icon { width: 15px; height: 15px; color: var(--accent-orange); }
+.unit-cat-pill.active .icon { color: #ffffff; }
+
+.espees-icon .icon { width: 18px; height: 18px; }
+.espees-icon { box-shadow: 0 0 0 4px var(--accent-orange-glow); }
+
+.card-illustration .icon { width: 52px; height: 52px; stroke-width: 1.6; }
+
+/* Light theme: darken the accent on icons so they keep contrast on white */
+[data-theme="light"] .icon-btn,
+[data-theme="light"] .icon-btn .icon,
+[data-theme="light"] .nav-tab:not(.active) .icon,
+[data-theme="light"] .toggle-sciemode-btn .icon,
+[data-theme="light"] .unit-cat-pill:not(.active) .icon,
+[data-theme="light"] .currency-selector-btn .selector-caret,
+[data-theme="light"] .bookmark-pair-btn,
+[data-theme="light"] .quick-matrix-title .icon,
+[data-theme="light"] .fav-badge,
+[data-theme="light"] .fav-currency-btn.is-fav,
+[data-theme="light"] .flag-icon--svg,
+[data-theme="light"] .header-actions .icon-btn .icon {
+  color: #e67300;
+}
+
+[data-theme="light"] .icon-btn:hover,
+[data-theme="light"] .header-actions .icon-btn:hover .icon {
+  color: #cc6600;
+}
+
+
+
+.bookmark-pair-btn > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bookmark-pair-btn .icon { width: 22px; height: 22px; }
+
+/* Non-flag currencies (Espees) render an icon instead of a country flag */
+.flag-icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.flag-icon--svg {
+  color: var(--accent-orange);
+}
+
+.flag-icon--svg .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.currency-selector-btn > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.currency-selector-btn .selector-caret {
+  color: var(--accent-orange);
+  transition: var(--transition-fast);
+}
+
+.currency-selector-btn:hover .selector-caret {
+  color: var(--accent-orange);
+}
+
+.fav-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--accent-orange);
+  background: var(--accent-orange-glow);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 4px;
+}
+
+.fav-badge .icon {
+  width: 11px;
+  height: 11px;
+}
+
+.fav-currency-btn {
+  color: var(--text-muted);
+}
+
+.fav-currency-btn.is-fav {
+  color: var(--accent-orange);
+}
+
+.bookmark-remove-btn .icon { width: 14px; height: 14px; }
 
 /* App Nav / Mode Selector */
 .mode-nav {
@@ -664,7 +844,7 @@ body {
 .bookmark-pair-btn {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
-  color: var(--text-secondary);
+  color: var(--accent-orange);
   width: 44px;
   height: 44px;
   border-radius: var(--radius-sm);
@@ -678,15 +858,17 @@ body {
 }
 
 .bookmark-pair-btn:hover {
-  background: var(--bg-hover);
+  background: var(--accent-orange-glow);
   border-color: var(--accent-orange);
-  color: var(--accent-orange);
+  color: var(--accent-orange-hover);
+  box-shadow: 0 0 0 1px var(--border-active);
 }
 
 .bookmark-pair-btn.active {
-  background: var(--bg-tertiary);
-  color: #ffb700;
-  border-color: #ffb700;
+  background: var(--accent-orange);
+  color: #ffffff;
+  border-color: var(--accent-orange);
+  box-shadow: 0 2px 12px var(--accent-orange-glow);
 }
 
 .exchange-rate-display {
@@ -735,6 +917,17 @@ body {
   font-weight: 600;
   font-size: 0.85rem;
   color: var(--text-primary);
+}
+
+.bookmark-pair-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.pair-arrow {
+  color: var(--text-muted);
 }
 
 .bookmark-card-rate {
@@ -793,6 +986,13 @@ body {
   font-weight: 600;
   color: var(--text-secondary);
   margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.quick-matrix-title .icon {
+  color: var(--accent-orange);
 }
 
 .quick-matrix-grid {
