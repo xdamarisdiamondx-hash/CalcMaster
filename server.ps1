@@ -4,7 +4,7 @@ $listener = New-Object System.Net.HttpListener
 $listener.Prefixes.Add("http://localhost:$port/")
 
 # ---------------------------------------------------------------
-# .env loader — SERVER-SIDE SECRETS
+# .env loader - SERVER-SIDE SECRETS
 # CURRENCY_API_KEY is read here and served ONLY through the
 # /api/rates proxy below. The .env file itself is never sent
 # to a browser (see the secret-file block in the request loop).
@@ -52,7 +52,7 @@ try {
         if ($localPath -eq "/") { $localPath = "/index.html" }
 
         # ---------------------------------------------------
-        # 1) /api/rates — currency proxy, key never exposed
+        # 1) /api/rates - currency proxy, key never exposed
         #    Returns an envelope so the client never has to
         #    guess at upstream HTTP status codes:
         #      {"ok":true,"source":"...","payload":{...}}
