@@ -1,0 +1,13 @@
+{
+  "appId": "com.calcmaster.app",
+  "appName": "CalcMaster",
+  "webDir": "www",
+  "backgroundColor": "#2d2d2d",
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#2d2d2d"
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

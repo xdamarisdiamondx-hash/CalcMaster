@@ -3,5 +3,15 @@
   "version": "1.0.0",
   "private": true,
   "description": "CalcMaster - calculator, unit and currency converter",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "scripts": {
+    "build:web": "node scripts/build-web.mjs",
+    "android": "npm run build:web && cap sync android",
+    "serve": "powershell -NoProfile -ExecutionPolicy Bypass -File server.ps1"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.6.9",
+    "@capacitor/cli": "^7.6.9",
+    "@capacitor/core": "^7.6.9"
+  }
 }

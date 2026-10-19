@@ -5,3 +5,8 @@
 node_modules/
 .DS_Store
 Thumbs.db
+
+# Generated Android build tree (regenerate: npm run build:web && npx cap add android)
+www/
+android/
+dist/
